@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
-	"log"
-	"net/http"
 	"image"
 	"image/jpeg"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 )
 
-func main(){
+func main() {
 	imgFile, err := os.Open("images/Test/Angela_Merkel_0004.jpg")
 	if err != nil {
 		log.Println("Error 1:")

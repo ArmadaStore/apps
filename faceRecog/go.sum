@@ -1,3 +1,4 @@
-github.com/nikhs247/goface v0.0.0-20201130235148-05196608da5e h1:iwp6sSkrOEaJedsEBvWl0aM7eoNY8qw23F28YDVkAnI=
-github.com/nikhs247/goface v0.0.0-20201130235925-b6d72baedfa6 h1:ekr+6XAoX8rOQMu5hfMiOxZJTkaRHTvfbMqc1/fTjwM=
-github.com/nikhs247/goface v0.0.0-20201130235925-b6d72baedfa6/go.mod h1:lJZks3Q3ACJ43qSbkR2KpL/rwMUjuqeyXdIZk8kpmx4=
+github.com/Kagami/go-face v0.0.0-20200825065730-3dd2d74dccfb h1:DXwA1Te9paM+nsdTGc7uve37lq7WEbQO+gwGBPVwQuQ=
+github.com/Kagami/go-face v0.0.0-20200825065730-3dd2d74dccfb/go.mod h1:9wdDJkRgo3SGTcFwbQ7elVIQhIr2bbBjecuY7VoqmPU=
+github.com/nikhs247/goface v0.0.0-20201201003150-eeb0ab66311c h1:6d+nG8Qculyf79IJ6VK3tDR/C2va/Pj1SXZ80fLq+40=
+github.com/nikhs247/goface v0.0.0-20201201003150-eeb0ab66311c/go.mod h1:lJZks3Q3ACJ43qSbkR2KpL/rwMUjuqeyXdIZk8kpmx4=

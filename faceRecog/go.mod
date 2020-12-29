@@ -1,5 +1,8 @@
-module github.com/nikhs247/FaceRecognition
+module github.com/ArmadaStore/apps/faceRecog
 
-go 1.14
+go 1.15
 
-require github.com/nikhs247/goface v0.0.0-20201130235925-b6d72baedfa6 // indirect
+require (
+	github.com/Kagami/go-face v0.0.0-20200825065730-3dd2d74dccfb // indirect
+	github.com/nikhs247/goface v0.0.0-20201201003150-eeb0ab66311c
+)
