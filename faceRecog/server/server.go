@@ -124,7 +124,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
-	frd.cargoInfo = cargo.Init(IP, Port, AppID, UserID)
+	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
 	http.HandleFunc("/upload", frd.uploadImage)
 	http.ListenAndServe(":8080", nil)
 }
