@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	imgFile, err := os.Open("images/Test/Angela_Merkel_0004.jpg")
+	imgFile, err := os.Open("Test/Angela_Merkel_0004.jpg")
 	if err != nil {
 		log.Println("Error 1:")
 		log.Fatal(err)

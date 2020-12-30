@@ -1,35 +1,38 @@
 package main
 
 import (
-	"net/http"
 	"fmt"
 	"image/jpeg"
 	"log"
+	"net/http"
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 
-	"github.com/nikhs247/goface"
-
+	"github.com/ArmadaStore/devices/cargo"
+	face "github.com/nikhs247/goface"
 )
 
 const modelDir = "models"
 const trainDir = "images/Train"
 
+var fileNameCounter = 0
+
 type faceRecogData struct {
-	rec *face.Recognizer
-	labels []string
+	rec       *face.Recognizer
+	labels    []string
+	cargoInfo *cargo.CargoInfo
 }
 
 func faceRecognitionSystem(frd *faceRecogData) {
-	fmt.Println("Facial Recognition System")
+	fmt.Fprintf(os.Stderr, "Facial Recognition System")
 	rec, err := face.NewRecognizer(modelDir)
 	if err != nil {
-		fmt.Println("Cannot initialize recognizer")
+		fmt.Fprintf(os.Stderr, "Cannot initialize recognizer")
 	}
 	//defer rec.Close()
 	frd.rec = rec
-	fmt.Println("Recognizer Initialized")
+	fmt.Fprintf(os.Stderr, "Recognizer Initialized")
 
 	///////////////////////////////////////////////////////////////////
 
@@ -37,30 +40,29 @@ func faceRecognitionSystem(frd *faceRecogData) {
 
 	var files []string
 	err = filepath.Walk(trainDir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir(){
+		if info.IsDir() {
 			return nil
 		}
 		_, file := filepath.Split(path)
-        files = append(files, file)
-        return nil
-    })
-    if err != nil {
-        panic(err)
-    }
+		files = append(files, file)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
 
-    // Recognize and label faces
+	// Recognize and label faces
 	var samples []face.Descriptor
 	var people []int32
 	ID := 0
 	for _, file := range files {
-        trainImage := filepath.Join(trainDir, file)
+		trainImage := filepath.Join(trainDir, file)
 
 		faces, err := frd.rec.RecognizeFile(trainImage)
 		if err != nil {
 			log.Fatalf("Can't recognize: %v", err)
 		}
 
-		
 		for _, f := range faces {
 			samples = append(samples, f.Descriptor)
 			// Each face is unique on that image so goes to its own category.
@@ -70,20 +72,21 @@ func faceRecognitionSystem(frd *faceRecogData) {
 		ID = ID + 1
 
 		frd.labels = append(frd.labels, strings.TrimSuffix(file, filepath.Ext(file)))
-    }    
-    // Pass samples to the recognizer.
+	}
+	// Pass samples to the recognizer.
 	frd.rec.SetSamples(samples, people)
 }
 
-
-func (frd *faceRecogData)uploadImage(w http.ResponseWriter, r *http.Request) {
+func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	img, err := jpeg.Decode(r.Body)
 	if err != nil {
 		log.Println("Error 1:")
 		log.Fatal(err)
 	}
 
-	imgFile, err := os.Create("receivedImag.jpg")
+	var fileName string
+	fmt.Sprintf(fileName, "face_%d.jpg", fileNameCounter)
+	imgFile, err := os.Create(fileName)
 	if err != nil {
 		log.Println("Error 2:")
 		log.Fatal(err)
@@ -93,14 +96,16 @@ func (frd *faceRecogData)uploadImage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		imgFile.Close()
 		log.Println("Error 3:")
-		log.Fatal(err)	
+		log.Fatal(err)
 	}
 	imgFile.Close()
 
+	frd.cargoInfo.Send(fileName)
+
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
-	
-	testImage := "receivedImag.jpg"
+
+	testImage := fileName
 	res, err := frd.rec.RecognizeSingleFile(testImage)
 	if err != nil {
 		log.Fatalf("Can't recognize: %v", err)
@@ -118,14 +123,21 @@ func (frd *faceRecogData)uploadImage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, frd.labels[imageID])
 }
 
-func setupHandles(frd *faceRecogData){
+func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
+	frd.cargoInfo = cargo.Init(IP, Port, AppID, UserID)
 	http.HandleFunc("/upload", frd.uploadImage)
 	http.ListenAndServe(":8080", nil)
 }
 
 func main() {
+
+	IP := os.Args[1]
+	Port := os.Args[2]
+	AppID := os.Args[3]
+	UserID := os.Args[4]
 	fmt.Println("Server starting")
 	var frd faceRecogData
 	faceRecognitionSystem(&frd)
-	setupHandles(&frd)
+	setupComm(&frd, IP, Port, AppID, UserID)
+	frd.cargoInfo.CleanUp()
 }
