@@ -84,13 +84,13 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	var fileName string
-	fmt.Sprintf(fileName, "face_%d.jpg", fileNameCounter)
+	fileName := fmt.Sprintf("face_%d.jpg", fileNameCounter)
 	imgFile, err := os.Create(fileName)
 	if err != nil {
 		log.Println("Error 2:")
 		log.Fatal(err)
 	}
+	fileNameCounter++
 
 	err = jpeg.Encode(imgFile, img, nil)
 	if err != nil {
