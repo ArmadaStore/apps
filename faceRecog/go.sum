@@ -3,8 +3,8 @@ github.com/ArmadaStore/cargo v0.0.0-20201227050135-8fd187884fb7 h1:+WO8DLei9nqro
 github.com/ArmadaStore/cargo v0.0.0-20201227050135-8fd187884fb7/go.mod h1:i3OI/LMotgtwg3hHsRM6uA+Xllfx32Uy+HyxwHCal+E=
 github.com/ArmadaStore/comms v0.0.0-20201227024450-e09d2955904b h1:dwAuPAKdB1/lRBlFU284tgycV9fGDsTrd8Kym9UHun0=
 github.com/ArmadaStore/comms v0.0.0-20201227024450-e09d2955904b/go.mod h1:OouJxx1pb5NTL3XCjyql2dwsyQIprH0nciAne+av7NU=
-github.com/ArmadaStore/devices v0.0.0-20201228234315-16efe2cbac08 h1:Xorwcyr2zEAwUStA+97nu6S7fAJDwedI1xR/iamoewc=
-github.com/ArmadaStore/devices v0.0.0-20201228234315-16efe2cbac08/go.mod h1:kBIt7nGQMMsJohvpCrFx4iV+GRfZ1OG/D271IYq0swM=
+github.com/ArmadaStore/devices v0.0.0-20201230235216-e08c9f3c1c89 h1:J3aiuCfqW2QQZkYSEEqLo4XqVxrUF/WM8tVrveDqdwA=
+github.com/ArmadaStore/devices v0.0.0-20201230235216-e08c9f3c1c89/go.mod h1:kBIt7nGQMMsJohvpCrFx4iV+GRfZ1OG/D271IYq0swM=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Kagami/go-face v0.0.0-20200825065730-3dd2d74dccfb h1:DXwA1Te9paM+nsdTGc7uve37lq7WEbQO+gwGBPVwQuQ=
 github.com/Kagami/go-face v0.0.0-20200825065730-3dd2d74dccfb/go.mod h1:9wdDJkRgo3SGTcFwbQ7elVIQhIr2bbBjecuY7VoqmPU=
