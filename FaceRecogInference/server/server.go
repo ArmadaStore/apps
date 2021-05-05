@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -81,9 +80,9 @@ func faceRecognitionSystem(frd *faceRecogData) {
 		}
 	}
 
-	fileContent := frd.cargoInfo.Read("id_label_desc.txt")
-	id_label_desc := strings.Split("\n")
-	pattern := regexp.MustCompile(" - ")
+	// fileContent := frd.cargoInfo.Read("id_label_desc.txt")
+	// id_label_desc := strings.Split(fileContent, "\n")
+	// pattern := regexp.MustCompile(" - ")
 	// Pass samples to the recognizer.
 	frd.rec.SetSamples(samples, people)
 }
