@@ -76,6 +76,8 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			people = append(people, ID)
 			var imageInfo string
 			fmt.Sprintf(imageInfo, "%d - %s - %v\n", ID, strings.TrimSuffix(file, filepath.Ext(file)), f.Descriptor)
+			fmt.Fprintf(os.Stderr, "Adding Image infor into cargo file\n")
+			fmt.Fprintf(os.Stderr, imageInfo)
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
 		}
 	}
@@ -134,7 +136,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
-	//frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
+	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
 	http.HandleFunc("/upload", frd.uploadImage)
 	http.ListenAndServe(":8080", nil)
 }
@@ -148,7 +150,8 @@ func main() {
 	fmt.Println("Server starting")
 	var frd faceRecogData
 	frd.mutex = &sync.Mutex{}
-	faceRecognitionSystem(&frd)
 	setupComm(&frd, IP, Port, AppID, UserID)
+	faceRecognitionSystem(&frd)
+
 	//frd.cargoInfo.CleanUp()
 }
