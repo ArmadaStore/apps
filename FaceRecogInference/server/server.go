@@ -30,14 +30,14 @@ type faceRecogData struct {
 }
 
 func faceRecognitionSystem(frd *faceRecogData) {
-	fmt.Fprintf(os.Stderr, "Facial Recognition System")
+	fmt.Fprintf(os.Stderr, "Facial Recognition System\n")
 	rec, err := face.NewRecognizer(modelDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot initialize recognizer")
 	}
 	//defer rec.Close()
 	frd.rec = rec
-	fmt.Fprintf(os.Stderr, "Recognizer Initialized")
+	fmt.Fprintf(os.Stderr, "Recognizer Initialized\n")
 
 	///////////////////////////////////////////////////////////////////
 
