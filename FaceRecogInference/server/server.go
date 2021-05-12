@@ -76,8 +76,9 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			people = append(people, ID)
 			var imageInfo string
 			fmt.Sprintf(imageInfo, "%d - %s - %v\n", ID, strings.TrimSuffix(file, filepath.Ext(file)), f.Descriptor)
-			fmt.Fprintf(os.Stderr, "Adding Image infor into cargo file\n")
+			fmt.Fprintf(os.Stderr, "Adding Image info into cargo file\n")
 			fmt.Fprintf(os.Stderr, imageInfo)
+			fmt.Println(frd.cargoInfo)
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
 		}
 	}
@@ -135,7 +136,8 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, frd.labels[imageID])
 }
 
-func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
+func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
 	http.HandleFunc("/upload", frd.uploadImage)
 	http.ListenAndServe(":8080", nil)
@@ -150,8 +152,12 @@ func main() {
 	fmt.Println("Server starting")
 	var frd faceRecogData
 	frd.mutex = &sync.Mutex{}
-	setupComm(&frd, IP, Port, AppID, UserID)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go setupComm(&frd, IP, Port, AppID, UserID, &wg)
+	time.Sleep(1 * time.Second)
 	faceRecognitionSystem(&frd)
+	wg.Wait()
 
 	//frd.cargoInfo.CleanUp()
 }
