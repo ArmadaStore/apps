@@ -74,11 +74,9 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			ID := rand.Int31n(math.MaxInt32)
 			// Each face is unique on that image so goes to its own category.
 			people = append(people, ID)
-			var imageInfo string
-			fmt.Sprintf(imageInfo, "%d - %s - %v\n", ID, strings.TrimSuffix(file, filepath.Ext(file)), f.Descriptor)
-			fmt.Fprintf(os.Stderr, "Adding Image info into cargo file\n")
-			fmt.Fprintf(os.Stderr, imageInfo)
-			fmt.Println(frd.cargoInfo)
+			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, strings.TrimSuffix(file, filepath.Ext(file)), f.Descriptor)
+			fmt.Println("Image info: ", imageInfo)
+			fmt.Println("Cargo info: ", frd.cargoInfo)
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
 		}
 	}
