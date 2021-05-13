@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image/jpeg"
 	"log"
@@ -24,7 +25,7 @@ var fileNameCounter = 0
 
 type faceRecogData struct {
 	rec       *face.Recognizer
-	labels    []string
+	labelmap  map[int32]string
 	cargoInfo *cargo.CargoInfo
 	mutex     *sync.Mutex
 }
@@ -74,28 +75,36 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			ID := rand.Int31n(math.MaxInt32)
 			// Each face is unique on that image so goes to its own category.
 			people = append(people, ID)
-			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, strings.TrimSuffix(file, filepath.Ext(file)), f.Descriptor)
-			fmt.Println("Image info: ", imageInfo)
-			fmt.Println("Cargo info: ", frd.cargoInfo)
+			name := strings.TrimSuffix(file, filepath.Ext(file))
+			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, name, f.Descriptor)
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
+			frd.labelmap[ID] = name
 		}
 	}
 
-	// fileContent := frd.cargoInfo.Read("id_label_desc.txt")
-	// id_label_desc := strings.Split(fileContent, "\n")
-	// pattern := regexp.MustCompile(" - ")
 	// Pass samples to the recognizer.
 	frd.rec.SetSamples(samples, people)
 }
 
 func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
-	img, err := jpeg.Decode(r.Body)
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error 1:")
+		log.Fatal(err)
+	}
+	imgStr := r.Form.Get("img")
+	imgByte := []byte(imgStr)
+	imgData := bytes.NewReader(imgByte)
+	img, err := jpeg.Decode(imgData)
+	// img, err := jpeg.Decode(r.Body)
 	if err != nil {
 		log.Println("Error 1:")
 		log.Fatal(err)
 	}
 
-	fileName := fmt.Sprintf("face_%d.jpg", fileNameCounter)
+	// fileName := fmt.Sprintf("face_%d.jpg", fileNameCounter)
+	sendImgName := r.Form.Get("name")
+	fileName := fmt.Sprintf("%s.jpg", sendImgName)
 	imgFile, err := os.Create(fileName)
 	if err != nil {
 		log.Println("Error 2:")
@@ -111,8 +120,6 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	imgFile.Close()
 
-	//frd.cargoInfo.Send(fileName)
-
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
 
@@ -126,19 +133,30 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageID := frd.rec.Classify(res.Descriptor)
-	if imageID < 0 {
-		log.Fatalf("Can't classify")
-	}
+	resName := frd.labelmap[int32(imageID)]
 
-	fmt.Println(frd.labels[imageID])
-	fmt.Fprintf(w, frd.labels[imageID])
+	if imageID < 0 || !strings.Contains(resName, sendImgName) {
+		// log.Fatalf("Can't classify")
+		readData := frd.cargoInfo.Read("id_label_desc.txt")
+
+		// Recognize and label faces
+		// var samples []face.Descriptor
+		// var people []int32
+
+		records := strings.Split(readData, "\n")
+		nRecs := len(records)
+
+		for i := 0; i < nRecs; i++ {
+			fmt.Println(records[i])
+		}
+	}
+	fmt.Fprintf(w, resName)
 }
 
-func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string, wg *sync.WaitGroup) {
-	defer wg.Done()
-	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
+func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
+
 	http.HandleFunc("/upload", frd.uploadImage)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8090", nil)
 }
 
 func main() {
@@ -150,12 +168,8 @@ func main() {
 	fmt.Println("Server starting")
 	var frd faceRecogData
 	frd.mutex = &sync.Mutex{}
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go setupComm(&frd, IP, Port, AppID, UserID, &wg)
-	time.Sleep(1 * time.Second)
+	frd.labelmap = make(map[int32]string)
+	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
 	faceRecognitionSystem(&frd)
-	wg.Wait()
-
-	//frd.cargoInfo.CleanUp()
+	setupComm(&frd, IP, Port, AppID, UserID)
 }

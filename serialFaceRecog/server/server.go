@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/ArmadaStore/devices/cargo"
@@ -67,6 +68,7 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			samples = append(samples, f.Descriptor)
 			// Each face is unique on that image so goes to its own category.
 			people = append(people, int32(ID))
+			fmt.Println("Type and size of descriptor: ", reflect.TypeOf(f.Descriptor), " ", len(f.Descriptor))
 		}
 
 		ID = ID + 1
@@ -100,7 +102,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	imgFile.Close()
 
-	frd.cargoInfo.Send(fileName)
+	// frd.cargoInfo.Send(fileName)
 
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
@@ -124,7 +126,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
-	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
+	// frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
 	http.HandleFunc("/upload", frd.uploadImage)
 	http.ListenAndServe(":8080", nil)
 }
@@ -139,5 +141,5 @@ func main() {
 	var frd faceRecogData
 	faceRecognitionSystem(&frd)
 	setupComm(&frd, IP, Port, AppID, UserID)
-	frd.cargoInfo.CleanUp()
+	// frd.cargoInfo.CleanUp()
 }
