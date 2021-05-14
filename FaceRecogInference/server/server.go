@@ -31,6 +31,11 @@ type faceRecogData struct {
 	mutex     *sync.Mutex
 }
 
+func logTime() {
+	currTime := time.Now()
+	fmt.Fprintf(os.Stderr, "%s", currTime.Format("2021-01-02 13:01:02 :: "))
+}
+
 func faceRecognitionSystem(frd *faceRecogData) {
 	fmt.Fprintf(os.Stderr, "Facial Recognition System\n")
 	rec, err := face.NewRecognizer(modelDir)
@@ -124,6 +129,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
 
+	start := time.Now()
 	testImage := fileName
 	res, err := frd.rec.RecognizeSingleFile(testImage)
 	if err != nil {
@@ -139,9 +145,13 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 		resName = frd.labelmap[int32(imageID)]
 	}
 
+	duration := time.Since(start)
+
+	logTime()
+	fmt.Println("Processing time: ", duration)
+
 	if imageID < 0 || !strings.Contains(resName, sendImgName) {
 
-		// log.Fatalf("Can't classify")
 		readData := frd.cargoInfo.Read("id_label_desc.txt")
 
 		// Recognize and label faces
@@ -159,19 +169,23 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 			descStr := strings.Split(descTemp, " ")
 			var desc face.Descriptor
 			for j := 0; j < len(descStr); j++ {
-				if desc[j], err = strconv.ParseFloat(descStr[j], 32); err != nil {
+				res, err := strconv.ParseFloat(descStr[j], 32)
+				if err != nil {
 					fmt.Println("Error converting string to float32")
 				}
+				desc[j] = float32(res)
 			}
 
 			// Name and ID
 			nameIDTemp := strings.Split(halfSplit[0], "-")
-			imgName := strings.TrimSuffix(nameIDTemp[0], " ")
-			imgIDStr := strings.TrimSuffix(nameIDTemp[1], " ")
-			imgID := int32(0)
-			if imgID, err = strconv.ParseInt(imgIDStr, 10, 32); err != nil {
+			imgName := strings.TrimSuffix(nameIDTemp[1], " ")
+			imgIDStr := strings.TrimSuffix(nameIDTemp[0], " ")
+			id, err := strconv.ParseInt(imgIDStr, 10, 32)
+			if err != nil {
+				fmt.Println("imgIDStr ", imgIDStr)
 				fmt.Println("Error converting string to int32")
 			}
+			imgID := int32(id)
 			samples = append(samples, desc)
 			people = append(people, imgID)
 			frd.labelmap[imgID] = imgName
@@ -184,6 +198,10 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 
 		if !strings.Contains(resName, sendImgName) {
 			resName = "Not found"
+			ID := rand.Int31n(math.MaxInt32)
+			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, sendImgName, res.Descriptor)
+			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
+			frd.labelmap[ID] = sendImgName
 		}
 	}
 	fmt.Fprintf(w, resName)
