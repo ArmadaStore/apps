@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -133,21 +134,56 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageID := frd.rec.Classify(res.Descriptor)
-	resName := frd.labelmap[int32(imageID)]
+	resName := ""
+	if imageID > 0 {
+		resName = frd.labelmap[int32(imageID)]
+	}
 
 	if imageID < 0 || !strings.Contains(resName, sendImgName) {
+
 		// log.Fatalf("Can't classify")
 		readData := frd.cargoInfo.Read("id_label_desc.txt")
 
 		// Recognize and label faces
-		// var samples []face.Descriptor
-		// var people []int32
+		var samples []face.Descriptor
+		var people []int32
 
 		records := strings.Split(readData, "\n")
 		nRecs := len(records)
 
-		for i := 0; i < nRecs; i++ {
-			fmt.Println(records[i])
+		for i := 0; i < nRecs-1; i++ {
+			halfSplit := strings.Split(records[i], "[")
+
+			// Descriptor
+			descTemp := strings.TrimSuffix(halfSplit[1], "]")
+			descStr := strings.Split(descTemp, " ")
+			var desc face.Descriptor
+			for j := 0; j < len(descStr); j++ {
+				if desc[j], err = strconv.ParseFloat(descStr[j], 32); err != nil {
+					fmt.Println("Error converting string to float32")
+				}
+			}
+
+			// Name and ID
+			nameIDTemp := strings.Split(halfSplit[0], "-")
+			imgName := strings.TrimSuffix(nameIDTemp[0], " ")
+			imgIDStr := strings.TrimSuffix(nameIDTemp[1], " ")
+			imgID := int32(0)
+			if imgID, err = strconv.ParseInt(imgIDStr, 10, 32); err != nil {
+				fmt.Println("Error converting string to int32")
+			}
+			samples = append(samples, desc)
+			people = append(people, imgID)
+			frd.labelmap[imgID] = imgName
+		}
+		frd.rec.SetSamples(samples, people)
+		imageID = frd.rec.Classify(res.Descriptor)
+		if imageID > 0 {
+			resName = frd.labelmap[int32(imageID)]
+		}
+
+		if !strings.Contains(resName, sendImgName) {
+			resName = "Not found"
 		}
 	}
 	fmt.Fprintf(w, resName)
