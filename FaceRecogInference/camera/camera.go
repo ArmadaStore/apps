@@ -45,11 +45,11 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Error 5:")
 		log.Fatal(err)
 	}
 
-	log.Println(string(body))
+	// log.Println(string(body))
 }

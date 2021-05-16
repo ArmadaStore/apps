@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image/jpeg"
 	"log"
 	"math"
 	"math/rand"
@@ -22,8 +20,6 @@ import (
 const modelDir = "models"
 const trainDir = "images/Train"
 
-var fileNameCounter = 0
-
 type faceRecogData struct {
 	rec       *face.Recognizer
 	labelmap  map[int32]string
@@ -37,14 +33,14 @@ func logTime() {
 }
 
 func faceRecognitionSystem(frd *faceRecogData) {
-	fmt.Fprintf(os.Stderr, "Facial Recognition System\n")
+	// fmt.Fprintf(os.Stderr, "Facial Recognition System\n")
 	rec, err := face.NewRecognizer(modelDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot initialize recognizer")
 	}
 	//defer rec.Close()
 	frd.rec = rec
-	fmt.Fprintf(os.Stderr, "Recognizer Initialized\n")
+	// fmt.Fprintf(os.Stderr, "Recognizer Initialized\n")
 
 	///////////////////////////////////////////////////////////////////
 
@@ -83,7 +79,10 @@ func faceRecognitionSystem(frd *faceRecogData) {
 			people = append(people, ID)
 			name := strings.TrimSuffix(file, filepath.Ext(file))
 			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, name, f.Descriptor)
+			startWrite := time.Now()
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
+			endWrite := time.Since(startWrite)
+			fmt.Println("W ", endWrite)
 			frd.labelmap[ID] = name
 		}
 	}
@@ -100,38 +99,13 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	imgStr := r.Form.Get("img")
 	imgByte := []byte(imgStr)
-	imgData := bytes.NewReader(imgByte)
-	img, err := jpeg.Decode(imgData)
-	// img, err := jpeg.Decode(r.Body)
-	if err != nil {
-		log.Println("Error 1:")
-		log.Fatal(err)
-	}
-
-	// fileName := fmt.Sprintf("face_%d.jpg", fileNameCounter)
 	sendImgName := r.Form.Get("name")
-	fileName := fmt.Sprintf("%s.jpg", sendImgName)
-	imgFile, err := os.Create(fileName)
-	if err != nil {
-		log.Println("Error 2:")
-		log.Fatal(err)
-	}
-	fileNameCounter++
-
-	err = jpeg.Encode(imgFile, img, nil)
-	if err != nil {
-		imgFile.Close()
-		log.Println("Error 3:")
-		log.Fatal(err)
-	}
-	imgFile.Close()
 
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
 
-	start := time.Now()
-	testImage := fileName
-	res, err := frd.rec.RecognizeSingleFile(testImage)
+	// startProc := time.Now()
+	res, err := frd.rec.RecognizeSingle(imgByte)
 	if err != nil {
 		log.Fatalf("Can't recognize: %v", err)
 	}
@@ -140,19 +114,20 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageID := frd.rec.Classify(res.Descriptor)
+	// endProc := time.Since(startProc)
+	// fmt.Println("P ", endProc)
+
 	resName := ""
 	if imageID > 0 {
 		resName = frd.labelmap[int32(imageID)]
 	}
 
-	duration := time.Since(start)
-
-	logTime()
-	fmt.Println("Processing time: ", duration)
-
 	if imageID < 0 || !strings.Contains(resName, sendImgName) {
 
+		startRead := time.Now()
 		readData := frd.cargoInfo.Read("id_label_desc.txt")
+		endRead := time.Since(startRead)
+		fmt.Println("R ", endRead)
 
 		// Recognize and label faces
 		var samples []face.Descriptor
@@ -200,7 +175,10 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 			resName = "Not found"
 			ID := rand.Int31n(math.MaxInt32)
 			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, sendImgName, res.Descriptor)
+			startWrite := time.Now()
 			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
+			endWrite := time.Since(startWrite)
+			fmt.Println("W ", endWrite)
 			frd.labelmap[ID] = sendImgName
 		}
 	}
@@ -219,7 +197,6 @@ func main() {
 	Port := os.Args[2]
 	AppID := os.Args[3]
 	UserID := os.Args[4]
-	fmt.Println("Server starting")
 	var frd faceRecogData
 	frd.mutex = &sync.Mutex{}
 	frd.labelmap = make(map[int32]string)
