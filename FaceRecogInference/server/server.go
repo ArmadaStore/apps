@@ -23,6 +23,8 @@ const trainDir = "images/Train"
 type faceRecogData struct {
 	rec       *face.Recognizer
 	labelmap  map[int32]string
+	samples   []face.Descriptor
+	people    []int32
 	cargoInfo *cargo.CargoInfo
 	mutex     *sync.Mutex
 }
@@ -59,10 +61,6 @@ func faceRecognitionSystem(frd *faceRecogData) {
 		panic(err)
 	}
 
-	// Recognize and label faces
-	var samples []face.Descriptor
-	var people []int32
-
 	rand.Seed(time.Now().UnixNano())
 	for _, file := range files {
 		trainImage := filepath.Join(trainDir, file)
@@ -73,10 +71,10 @@ func faceRecognitionSystem(frd *faceRecogData) {
 		}
 
 		for _, f := range faces {
-			samples = append(samples, f.Descriptor)
+			frd.samples = append(samples, f.Descriptor)
 			ID := rand.Int31n(math.MaxInt32)
 			// Each face is unique on that image so goes to its own category.
-			people = append(people, ID)
+			frd.people = append(people, ID)
 			name := strings.TrimSuffix(file, filepath.Ext(file))
 			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, name, f.Descriptor)
 			startWrite := time.Now()
@@ -88,7 +86,7 @@ func faceRecognitionSystem(frd *faceRecogData) {
 	}
 
 	// Pass samples to the recognizer.
-	frd.rec.SetSamples(samples, people)
+	frd.rec.SetSamples(frd.samples, frd.people)
 }
 
 func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +108,9 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Can't recognize: %v", err)
 	}
 	if res == nil {
-		log.Fatalf("Not a single face on the image")
+		resName := "Not found"
+		fmt.Fprintf(w, resName)
+		return
 	}
 
 	imageID := frd.rec.Classify(res.Descriptor)
@@ -129,10 +129,18 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 		endRead := time.Since(startRead)
 		fmt.Println("R ", endRead)
 
-		// Recognize and label faces
-		var samples []face.Descriptor
-		var people []int32
-
+		id len(readData < 5) {
+			resName = "Not found"
+			ID := rand.Int31n(math.MaxInt32)
+			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, sendImgName, res.Descriptor)
+			startWrite := time.Now()
+			frd.cargoInfo.Write("id_label_desc.txt", imageInfo)
+			endWrite := time.Since(startWrite)
+			fmt.Println("W ", endWrite)
+			frd.labelmap[ID] = sendImgName
+			fmt.Fprintf(w, resName)
+			return
+		}
 		records := strings.Split(readData, "\n")
 		nRecs := len(records)
 
@@ -161,11 +169,11 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("Error converting string to int32")
 			}
 			imgID := int32(id)
-			samples = append(samples, desc)
-			people = append(people, imgID)
+			frd.samples = append(samples, desc)
+			frd.people = append(people, imgID)
 			frd.labelmap[imgID] = imgName
 		}
-		frd.rec.SetSamples(samples, people)
+		frd.rec.SetSamples(frd.samples, frd.people)
 		imageID = frd.rec.Classify(res.Descriptor)
 		if imageID > 0 {
 			resName = frd.labelmap[int32(imageID)]
@@ -188,7 +196,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
 
 	http.HandleFunc("/upload", frd.uploadImage)
-	http.ListenAndServe(":8090", nil)
+	http.ListenAndServe("0.0.0.0:8090", nil)
 }
 
 func main() {
