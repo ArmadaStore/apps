@@ -71,10 +71,10 @@ func faceRecognitionSystem(frd *faceRecogData) {
 		}
 
 		for _, f := range faces {
-			frd.samples = append(samples, f.Descriptor)
+			frd.samples = append(frd.samples, f.Descriptor)
 			ID := rand.Int31n(math.MaxInt32)
 			// Each face is unique on that image so goes to its own category.
-			frd.people = append(people, ID)
+			frd.people = append(frd.people, ID)
 			name := strings.TrimSuffix(file, filepath.Ext(file))
 			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, name, f.Descriptor)
 			startWrite := time.Now()
@@ -129,7 +129,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 		endRead := time.Since(startRead)
 		fmt.Println("R ", endRead)
 
-		id len(readData < 5) {
+		if len(readData) < 5 {
 			resName = "Not found"
 			ID := rand.Int31n(math.MaxInt32)
 			imageInfo := fmt.Sprintf("%d - %s - %v\n", ID, sendImgName, res.Descriptor)
@@ -169,8 +169,8 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 				fmt.Println("Error converting string to int32")
 			}
 			imgID := int32(id)
-			frd.samples = append(samples, desc)
-			frd.people = append(people, imgID)
+			frd.samples = append(frd.samples, desc)
+			frd.people = append(frd.people, imgID)
 			frd.labelmap[imgID] = imgName
 		}
 		frd.rec.SetSamples(frd.samples, frd.people)
