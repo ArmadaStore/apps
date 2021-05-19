@@ -102,7 +102,7 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	///////////////////////////////////////////////////////////////////
 	// Testimg with new images
 
-	// startProc := time.Now()
+	startProc := time.Now()
 	res, err := frd.rec.RecognizeSingle(imgByte)
 	if err != nil {
 		log.Fatalf("Can't recognize: %v", err)
@@ -114,8 +114,8 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageID := frd.rec.Classify(res.Descriptor)
-	// endProc := time.Since(startProc)
-	// fmt.Println("P ", endProc)
+	endProc := time.Since(startProc)
+	fmt.Println("P ", endProc)
 
 	resName := ""
 	if imageID > 0 {
