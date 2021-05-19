@@ -193,22 +193,23 @@ func (frd *faceRecogData) uploadImage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, resName)
 }
 
-func setupComm(frd *faceRecogData, IP string, Port string, AppID string, UserID string) {
+func setupComm(frd *faceRecogData, serverPort string) {
 
 	http.HandleFunc("/upload", frd.uploadImage)
-	http.ListenAndServe("0.0.0.0:8090", nil)
+	http.ListenAndServe("0.0.0.0:"+serverPort, nil)
 }
 
 func main() {
 
-	IP := os.Args[1]
-	Port := os.Args[2]
-	AppID := os.Args[3]
-	UserID := os.Args[4]
+	cargoIP := os.Args[1]
+	cargoPort := os.Args[2]
+	serverPort := os.Args[3]
+	AppID := os.Args[4]
+	UserID := os.Args[5]
 	var frd faceRecogData
 	frd.mutex = &sync.Mutex{}
 	frd.labelmap = make(map[int32]string)
-	frd.cargoInfo = cargo.InitCargo(IP, Port, AppID, UserID)
+	frd.cargoInfo = cargo.InitCargo(cargoIP, cargoPort, AppID, UserID)
 	faceRecognitionSystem(&frd)
-	setupComm(&frd, IP, Port, AppID, UserID)
+	setupComm(&frd, serverPort)
 }
